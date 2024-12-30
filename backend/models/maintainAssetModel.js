@@ -2,11 +2,7 @@ import mongoose from "mongoose";
 const assetMaintenanceSchema = new mongoose.Schema({
   assetID: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'asset',
-      required: true,
-  },
-  maintenanceDate: {
-      type: Date,
+      ref: 'Asset',
       required: true,
   },
   maintenanceDetails: {

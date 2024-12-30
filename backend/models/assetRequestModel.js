@@ -19,10 +19,6 @@ const requestAssetSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
-        quantityRequested: {
-            type: Number,
-            required: true,
-        },
         assetSpecifications: {
             type: String,
         },

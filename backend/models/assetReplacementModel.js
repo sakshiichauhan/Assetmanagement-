@@ -6,17 +6,12 @@ const assetReplacementSchema = new mongoose.Schema(
   {
     assetId: {
       type: mongoose.Schema.Types.ObjectId,  // Reference to the Asset model
-      ref: 'asset',  // Reference to Asset collection
+      ref: 'Asset',  // Reference to Asset collection
       required: true,
-    },
-    replacementDate: {
-      type: Date,
-      required: true,
-      default: Date.now,
     },
     employeeInfo: {
       type: mongoose.Schema.Types.ObjectId,  // Reference to the Employee model
-      ref: 'employee',  // Reference to Employee collection
+      ref: 'Employee',  // Reference to Employee collection
       required: true,
     },
     assetInfo: {
@@ -32,18 +27,13 @@ const assetReplacementSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
-      assetLocation: {
-        type: String,
+      Room: {
+        type: mongoose.Schema.Types.ObjectId,  
+        ref: 'room',
         required: true,
       },
       reasonForReplacement: {
         type: String,
-        enum: ['Damaged beyond repair', 'Outdated/obsolete', 'Malfunctioning/No longer functioning', 'Other'],
-        required: true,
-      },
-      currentCondition: {
-        type: String,
-        enum: ['Working', 'Partially Working', 'Not Working'],
         required: true,
       },
     },

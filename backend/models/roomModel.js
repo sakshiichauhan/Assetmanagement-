@@ -6,6 +6,12 @@ const roomSchema = new mongoose.Schema(
       type: String, 
       required: true 
     },
+    Assetname: {
+          type: [mongoose.Schema.Types.ObjectId], // Array of ObjectIds referencing 'AssetReplacement'
+          ref: 'Asset',
+          default: [], // Default to an empty array if no asset replacements are associated
+        },
+
   },
   {
     timestamps: true, 

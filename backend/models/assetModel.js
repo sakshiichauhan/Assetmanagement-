@@ -29,9 +29,10 @@ const assetSchema = new mongoose.Schema(
       enum: ['hardware', 'furniture', 'other'],
       required: true,
     },
-    assignedRoomname: {
-      type: String,
-      required: null,
+    Room: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'room',
+      required: true,
     },
     assignedDate: {
       type: Date,
