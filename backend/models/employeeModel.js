@@ -35,20 +35,34 @@ const employeeSchema = new mongoose.Schema(
       ref: 'User', // Reference to the User model
       required: true,
     },
-    maintenanceRequest: {
-      type: [mongoose.Schema.Types.ObjectId], // Change to an array of ObjectIds
-      ref: 'MaintenanceRequest',
-      default: [], // Default value as an empty array
+    Asset: {
+      type: [mongoose.Schema.Types.ObjectId], // Array of ObjectIds referencing 'Asset'
+      ref: 'Asset',
+      default: [], // Default to an empty array if no assets are associated
+    },
+    AssetMaintenance: {
+      type: [mongoose.Schema.Types.ObjectId], // Array of ObjectIds referencing 'AssetMaintenance'
+      ref: 'AssetMaintenance',
+      default: [], // Default to an empty array if no asset maintenance records are associated
+    },
+    AssetReplacement: {
+      type: [mongoose.Schema.Types.ObjectId], // Array of ObjectIds referencing 'AssetReplacement'
+      ref: 'AssetReplacement',
+      default: [], // Default to an empty array if no asset replacements are associated
+    },
+    requestAsset: {
+      type: [mongoose.Schema.Types.ObjectId], // Array of ObjectIds referencing 'RequestAssets'
+      ref: 'RequestAssets',
+      default: [], // Default to an empty array if no asset requests are associated
     },
   },
   {
-    timestamps: true, // This adds createdAt and updatedAt automatically
-    minimize: false, // Ensures empty objects are not removed
+    timestamps: true, // Automatically adds createdAt and updatedAt fields
+    minimize: false, // Ensures that empty objects are not removed from the schema
   }
 );
 
 // Check if the model already exists in mongoose.models before defining it
-const employeeModel =
-  mongoose.models.Employee || mongoose.model('Employee', employeeSchema);
+const employeeModel =mongoose.models.Employee || mongoose.model('Employee', employeeSchema);
 
 export default employeeModel;

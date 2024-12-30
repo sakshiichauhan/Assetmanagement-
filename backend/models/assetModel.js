@@ -29,11 +29,6 @@ const assetSchema = new mongoose.Schema(
       enum: ['hardware', 'furniture', 'other'],
       required: true,
     },
-    assignedToemployee: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'employeeId', // Reference to the User schema for employees
-      default: null,
-    },
     assignedRoomname: {
       type: String,
       required: null,
@@ -46,11 +41,6 @@ const assetSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    createdby: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-  },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt fields
