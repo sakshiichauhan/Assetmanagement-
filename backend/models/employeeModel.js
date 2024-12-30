@@ -42,7 +42,7 @@ const employeeSchema = new mongoose.Schema(
     },
     AssetMaintenance: {
       type: [mongoose.Schema.Types.ObjectId], // Array of ObjectIds referencing 'AssetMaintenance'
-      ref: 'AssetMaintenance',
+      ref: 'assetMaintenance',
       default: [], // Default to an empty array if no asset maintenance records are associated
     },
     AssetReplacement: {
