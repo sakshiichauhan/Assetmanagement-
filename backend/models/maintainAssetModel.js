@@ -1,28 +1,25 @@
 import mongoose from "mongoose";
-const assetMaintenanceSchema = new mongoose.Schema({
-  assetID: {
+
+const assetMaintenanceSchema = new mongoose.Schema(
+  {
+    assetID: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Asset',
       required: true,
-  },
-  maintenanceDetails: {
+    },
+    maintenanceDetails: {
       type: String,
-  },
-  maintenanceType: {
+    },
+    maintenanceType: {
       type: String,
       required: true,
+    },
   },
-  createdAt: {
-      type: Date,
-      default: Date.now,
-  },
-  updatedAt: {
-      type: Date,
-      default: Date.now,
-  },
-});
+  { 
+    timestamps: true  // Adds createdAt and updatedAt automatically
+  }
+);
 
- 
 const assetMaintenance = mongoose.model('assetMaintenance', assetMaintenanceSchema);
 
-export default assetMaintenance 
+export default assetMaintenance;
