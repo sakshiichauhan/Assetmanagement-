@@ -47,12 +47,12 @@ const employeeSchema = new mongoose.Schema(
     },
     AssetReplacement: {
       type: [mongoose.Schema.Types.ObjectId], // Array of ObjectIds referencing 'AssetReplacement'
-      ref: 'AssetReplacement',
+      ref: 'assetReplacement',
       default: [], // Default to an empty array if no asset replacements are associated
     },
     requestAsset: {
       type: [mongoose.Schema.Types.ObjectId], // Array of ObjectIds referencing 'RequestAssets'
-      ref: 'RequestAssets',
+      ref: 'requestAssets',
       default: [], // Default to an empty array if no asset requests are associated
     },
   },
