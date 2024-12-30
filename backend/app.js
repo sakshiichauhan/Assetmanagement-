@@ -4,8 +4,8 @@ import cors from 'cors';
 import dotenv from "dotenv";
 import {connectDB} from './config/db.js'
 import assetRouter from './routes/assetRoutes.js';
-import employeeRouter from './routes/employeeRoutes.js';
-import roomRouter from './routes/roomRoutes.js';
+import employeerouter from './routes/employeeRoutes.js'
+//import roomRouter from './routes/roomRoutes.js';
 import assetrequestRouter from './routes/assetRequestRoutes.js';
 import assetmaintainRouter from './routes/maintainAssetRoutes.js';
 import assetreplacementRouter from './routes/assetReplaceRoutes.js';
@@ -20,22 +20,25 @@ const app = express()
 // DB call
 connectDB();
 app.use(cookieParser());
+const origins = [ 'http://localhost:5173','http://localhost:5174'];
 const corsOptions = {
-    origin: 'http://localhost:5173',  // Define which origin is allowed
-    credentials: true                // Allow credentials (like cookies or authorization headers)
+    origin: origins, 
+    credentials: true,
+    methods: ['*'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }
 
 app.use(cors(corsOptions));
 app.use(express.json());
 
-app.use('/assets', assetRouter);
-app.use('/employee', employeeRouter);
-app.use('/room',roomRouter);
+app.use('/api/v1/Asset', assetRouter);
+app.use('/Employee', employeerouter);
+//app.use('/room',roomRouter);
 app.use('/requestAssets',assetrequestRouter);
 app.use('/assetMaintenance',assetmaintainRouter);
 app.use('/assetreplacement',assetreplacementRouter);
 app.use('/assetAssignement',assignassetRouter);
-app.use('/User',userRouter);
+app.use('/api/v1/User',userRouter);
 
 app.get("/",(req,res) => {
     res.send("Server running")

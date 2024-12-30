@@ -1,6 +1,7 @@
 import express from 'express';
 import { register, login, logout } from '../controller/userController.js'; // Adjust the path as necessary
 
+
 const userRouter = express.Router();
 
 // Register route

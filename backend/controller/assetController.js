@@ -1,99 +1,217 @@
-import assetModel from "../models/assetModel.js";
+import Asset from "../models/assetModel.js";
 
-// Create Asset
-const createAsset = async (req, res) => {
-  try {
-    const { name, description, model, serialNumber, condition, assignedToEmployee, assignedToRoom, assignedDate, returnDate, assetType } = req.body;
+// Register a new asset
+export const registerAsset = async (req, res) => {
+    try {
+        const { name, description, model, serialNumber, condition, assetType,employeeId , assignedToRoom, assignedDate } = req.body;
+        const userId = req.id; 
+        
+        // Validate input
+        if (!name || !serialNumber || !assetType) {
+            return res.status(400).json({
+                message: "Name, Serial Number, and Asset Type are required.",
+                success: false,
+            });
+        }
 
-    // Create a new asset
-    const newAsset = new assetModel({
-      name,
-      description,
-      model,
-      serialNumber,
-      condition,
-      assignedToEmployee,
-      assignedToRoom,
-      assignedDate,
-      returnDate,
-      assetType, // Added assetType here
-    });
+        // Check if the asset with the same serial number already exists
+        let asset = await Asset.findOne({ serialNumber });
+        if (asset) {
+            return res.status(400).json({
+                message: "Asset with the same serial number already exists.",
+                success: false,
+            });
+        }
 
-    // Save the new asset
-    await newAsset.save();
-    res.status(201).json({ message: 'Asset created successfully', asset: newAsset });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error creating asset', error: error.message });
-  }
-};
+        // Create the new asset
+        asset = await Asset.create({
+            name,
+            description,
+            model,
+            serialNumber,
+            condition,
+            assetType,
+            assignedToEmployee: employeeId, // Correct field usage
+            assignedToRoom,
+            assignedDate,
+            createdby: userId, // User creating the asset
+        });
 
-// Get All Assets
-const getAllAssets = async (req, res) => {
-  try {
-    // Get all assets from the database
-    const assets = await assetModel.find();
-    res.status(200).json(assets);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error fetching all assets", error: error.message });
-  }
-};
-
-// Get Asset by ID
-const getAssetById = async (req, res) => {
-  try {
-    // Find the asset by ID and populate the referenced fields
-    const asset = await assetModel.findById(req.params.id).populate("assignedToEmployee assignedToRoom");
-
-    if (!asset) {
-      return res.status(404).json({ message: "Asset not found" });
+        return res.status(201).json({
+            message: "Asset registered successfully.",
+            asset,
+            success: true,
+        });
+    } catch (error) {
+        console.error("Error registering asset:", error);
+        return res.status(500).json({
+            message: "Internal Server Error",
+            success: false,
+        });
     }
-    res.status(200).json(asset);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error fetching asset", error: error.message });
-  }
 };
 
-// Update Asset
-const updateAsset = async (req, res) => {
-  try {
-    const { name, description, model, condition, assignedToEmployee, assignedToRoom, returnDate, assetType } = req.body;
+// Get all assets assigned to the logged-in user
+export const getAllAssets = async (req, res) => {
+    try {
+        const keyword = req.query.keyword || ""; // Optional search keyword
 
-    // Update the asset by ID and return the updated asset
-    const updatedAsset = await assetModel.findByIdAndUpdate(
-      req.params.id,
-      { name, description, model, condition, assignedToEmployee, assignedToRoom, returnDate, assetType }, // Update with assetType
-      { new: true } // Return the updated asset
-    );
+        const query = { // Correct field usage
+            $or: [
+                { name: { $regex: keyword, $options: "i" } },
+                { description: { $regex: keyword, $options: "i" } },
+                { model: { $regex: keyword, $options: "i" } },
+                { condition: { $regex: keyword, $options: "i" } },
+                { assetType: { $regex: keyword, $options: "i" } },
+            ],
+        };
 
-    if (!updatedAsset) {
-      return res.status(404).json({ message: "Asset not found" });
+        // Fetch assets assigned to the logged-in user with optional search keyword
+        const assets = await Asset.find(query).populate({
+            path: '  assignedToemployee', 
+        }).sort({ createdAt: -1
+        });
+
+
+        if (!assets || assets.length === 0) {
+            return res.status(404).json({
+                message: "No assets found.",
+                success: false,
+            });
+        }
+
+        return res.status(200).json({
+            assets,
+            success: true,
+        });
+    } catch (error) {
+        console.error("Error fetching assets:", error);
+        return res.status(500).json({
+            message: "Internal Server Error",
+            success: false,
+        });
     }
+};
 
-    res.status(200).json({ message: "Asset updated successfully", asset: updatedAsset });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error updating asset", error: error.message });
-  }
+// Get an asset by ID (can also check if the asset is assigned to the logged-in user)
+export const getAssetById = async (req, res) => {
+    try {
+        const assetId = req.params.id;
+
+        // Fetch the asset by ID and check if it is assigned to the logged-in user
+        const asset = await Asset.findOne({assetId }) // Ensuring asset is assigned to logged-in user
+           .populate({
+            path: 'employees', // Assuming 'assignedToEmployee' and 'assignedToRoom' are populated fields
+        });
+
+        if (!asset) {
+            return res.status(404).json({
+                message: "Asset not found or not assigned to you.",
+                success: false,
+            });
+        }
+
+        return res.status(200).json({
+            asset,
+            success: true,
+        });
+    } catch (error) {
+        console.error("Error fetching asset by ID:", error);
+        return res.status(500).json({
+            message: "Internal Server Error",
+            success: false,
+        });
+    }
+};
+
+// Admin view all assets created by them
+export const getAdminAsset = async (req, res) => {
+    try {
+        const adminId = req.id; // Get the logged-in admin ID
+
+        const assets = await Asset.find({ createdBy: adminId }).populate({
+            path: 'employees', 
+        });
+
+        if (!assets || assets.length === 0) {
+            return res.status(404).json({
+                message: "No assets found.",
+                success: false,
+            });
+        }
+
+        return res.status(200).json({
+            assets,
+            success: true,
+        });
+    } catch (error) {
+        console.error("Error fetching admin assets:", error);
+        return res.status(500).json({
+            message: "Internal Server Error",
+            success: false,
+        });
+    }
+};
+
+// Update an asset's details
+export const updateAsset = async (req, res) => {
+    try {
+        const { name, description, model, condition, assignedToRoom, returnDate, assetType } = req.body;
+        const adminId = req.id; // Get userId from the request
+
+        // Update data object
+        const updateData = { name, description, model, condition, assignedToRoom, returnDate, assetType };
+        const asset = await Asset.findOneAndUpdate(
+            { _id: req.params.id, assignedToEmployee: adminId }, 
+            updateData,
+            { new: true }
+        );
+
+        if (!asset) {
+            return res.status(404).json({
+                message: "Asset not found or not assigned to you.",
+                success: false,
+            });
+        }
+
+        return res.status(200).json({
+            message: "Asset information updated successfully.",
+            asset,
+            success: true,
+        });
+    } catch (error) {
+        console.error("Error updating asset:", error);
+        return res.status(500).json({
+            message: "Internal Server Error",
+            success: false,
+        });
+    }
 };
 
 // Delete Asset by ID
-const deleteAsset = async (req, res) => {
-  try {
-    // Delete the asset by ID
-    const deletedAsset = await assetModel.findByIdAndDelete(req.params.id);
+export const deleteAsset = async (req, res) => {
+    try {
+        const adminId = req.id; // Get userId from the request
 
-    if (!deletedAsset) {
-      return res.status(404).json({ message: "Asset not found" });
+        // Delete the asset if assigned to the logged-in user
+        const asset = await Asset.findOneAndDelete({ _id: req.params.id, assignedToEmployee: adminId }); // Changed userId to adminId
+
+        if (!asset) {
+            return res.status(404).json({
+                message: "Asset not found or not assigned to you.",
+                success: false,
+            });
+        }
+
+        return res.status(200).json({
+            message: "Asset deleted successfully.",
+            success: true,
+        });
+    } catch (error) {
+        console.error("Error deleting asset:", error);
+        return res.status(500).json({
+            message: "Internal Server Error",
+            success: false,
+        });
     }
-
-    res.status(200).json({ message: "Asset deleted successfully" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error deleting asset", error: error.message });
-  }
 };
-
-export { createAsset, getAllAssets, getAssetById, updateAsset, deleteAsset };

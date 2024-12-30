@@ -1,67 +1,154 @@
-import roomModel from '../models/roomModel.js';
 
-// Create new room
+import roomModel from "../models/roomModel.js";
+
+// Create a new room
 export const createRoom = async (req, res) => {
   try {
-    const { roomName, roomId } = req.body;
-    const room = new roomModel({
-      roomId,
-      roomName
-    })
-    await room.save();
-    res.status(201).json({
-        message : "newRoom created"
-    });  // Return the created room
+    const { roomName } = req.body;
+    constUserId = req.userId;
+    
+    // Validate required fields
+    if (!roomName) {
+      return res.status(400).json({
+        message: "Room name is required.",
+        success: false,
+      });
+    }
+
+    // Create a new room
+    const room = await roomModel.create({ roomName });
+
+    return res.status(201).json({
+      message: "Room created successfully.",
+      room,
+      success: true,
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to create room' });
+    console.error("Error creating room:", error);
+    res.status(500).json({
+      message: "Failed to create room.",
+      success: false,
+    });
   }
 };
+
 
 // Get all rooms
-export const getRooms = async (req, res) => {
+export const getAllRooms = async (req, res) => {
   try {
-    const room = await roomModel.find();  // Get all rooms from the database
-    res.status(200).json({
-        message: "success"
-  });  // Return the list of rooms
+    const rooms = await roomModel.find();
+
+    if (!rooms.length) {
+      return res.status(404).json({
+        message: "No rooms found.",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      rooms,
+      success: true,
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch rooms' });
+    console.error("Error fetching rooms:", error);
+    res.status(500).json({
+      message: "Failed to fetch rooms.",
+      success: false,
+    });
   }
 };
 
-// Get room by ID
+// Get a room by ID
 export const getRoomById = async (req, res) => {
   try {
-    const rooms = await roomModel.findById(req.params.id);  // Find room by ID
-    if (!rooms) return res.status(404).json({ message: 'Room not found' });
-    res.status(200).json(rooms);  // Return the found room
+    const { id } = req.params;
+
+    const room = await roomModel.findById(id);
+
+    if (!room) {
+      return res.status(404).json({
+        message: "Room not found.",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      room,
+      success: true,
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch room' });
+    console.error("Error fetching room:", error);
+    res.status(500).json({
+      message: "Failed to fetch room.",
+      success: false,
+    });
   }
 };
 
-// Update room by ID
+// Update a room
 export const updateRoom = async (req, res) => {
   try {
+    const { id } = req.params;
+    const { roomName } = req.body;
+
+    // Validate required fields
+    if (!roomName) {
+      return res.status(400).json({
+        message: "Room name is required.",
+        success: false,
+      });
+    }
+
     const updatedRoom = await roomModel.findByIdAndUpdate(
-      req.params.id, 
-      req.body, 
-      { new: true }  // Return the updated room
+      id,
+      { roomName },
+      { new: true } // Return the updated document
     );
-    if (!updatedRoom) return res.status(404).json({ message: 'Room not found' });
-    res.status(200).json(updatedRoom);  // Return the updated room
+
+    if (!updatedRoom) {
+      return res.status(404).json({
+        message: "Room not found.",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Room updated successfully.",
+      room: updatedRoom,
+      success: true,
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to update room' });
+    console.error("Error updating room:", error);
+    res.status(500).json({
+      message: "Failed to update room.",
+      success: false,
+    });
   }
 };
 
-// Delete room by ID
+// Delete a room
 export const deleteRoom = async (req, res) => {
   try {
-    const deletedRoom = await roomModel.findByIdAndDelete(req.params.id);  // Delete room by ID
-    if (!deletedRoom) return res.status(404).json({ message: 'Room not found' });
-    res.status(200).json({ message: 'Room deleted successfully' });  // Return success message
+    const { id } = req.params;
+
+    const deletedRoom = await roomModel.findByIdAndDelete(id);
+
+    if (!deletedRoom) {
+      return res.status(404).json({
+        message: "Room not found.",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Room deleted successfully.",
+      success: true,
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to delete room' });
+    console.error("Error deleting room:", error);
+    res.status(500).json({
+      message: "Failed to delete room.",
+      success: false,
+    });
   }
 };

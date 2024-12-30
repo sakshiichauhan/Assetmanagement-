@@ -1,172 +1,162 @@
-import  employeeModel  from "../models/employeeModel.js"; // Import employee model
-import { getISTDateTime } from '../utils/timezone.js';  // Import the IST conversion function
+import employeeModel from "../models/employeeModel.js"; // Import employee model
+import mongoose from "mongoose"; // For ObjectId validation
 
-// Register new employee
+// Register a new employee
 export const registerEmployee = async (req, res) => {
-    try {
-        const { employeeName, employeeId, department, jobTitle, email, phone } = req.body;
-    
+  try {
+    const { employeeName, employeeId, department, jobTitle, email, phone } = req.body;
 
-        // Validate required fields
-        if (!employeeName || !employeeId || !department || !jobTitle || !email || !phone) {
-            return res.status(400).json({
-                message: "All fields are required.",
-                success: false
-            });
-        }
-
-        // Check if the employee already exists
-        let employee = await employeeModel.findOne({ employeeId });
-        if (employee) {
-            return res.status(400).json({
-                message: "Employee already exists.",
-                success: false
-            });
-        }
-
-        // Get current date in IST
-        const currentDateIST = getISTDateTime();  // Use the utility function to get the current date-time in IST
-
-        // Create a new employee record
-        employee = await employeeModel.create({
-            employeeName,
-            employeeId,
-            department,
-            jobTitle,
-            email,
-            phone,
-            userId: req.id,  // Assuming the logged-in user ID is available in req.id
-            createdAt: currentDateIST,  // Store the date in IST
-            updatedAt: currentDateIST   // Store the date in IST
-        });
-
-        return res.status(201).json({
-            message: "Employee registered successfully.",
-            employee,
-            success: true
-        });
-
-    } catch (error) {
-        console.log(error);  // Log error for debugging
-        res.status(500).json({
-            message: "Server error.",
-            success: false
-        });
+    // Validate required fields
+    if (!employeeName || !employeeId || !department || !jobTitle || !email || !phone) {
+      return res.status(400).json({
+        message: "All fields are required.",
+        success: false,
+      });
     }
-}
+
+    // Check if an employee with the same employeeId already exists
+    const existingEmployee = await employeeModel.findOne({ employeeId });
+    if (existingEmployee) {
+      return res.status(400).json({
+        message: "An employee with the same ID already exists.",
+        success: false,
+      });
+    }
+
+    // Create the new employee record
+    const employee = await employeeModel.create({
+      employeeName,
+      employeeId,
+      department,
+      jobTitle,
+      email,
+      phone,
+      userId: req.id, // Assuming `req.id` contains the logged-in user's ID
+    });
+
+    return res.status(201).json({
+      message: "Employee registered successfully.",
+      employee,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error registering employee:", error);
+    res.status(500).json({
+      message: "Failed to register employee.",
+      success: false,
+    });
+  }
+};
 
 // Get all employees of a logged-in user
 export const getEmployees = async (req, res) => {
-    try {
-        const userId = req.id;  // Logged-in user ID
-        const employees = await employeeModel.find({ userId });
+  try {
+    const userId = req.id; // Assuming `req.id` contains the logged-in user's ID
 
-        if (!employees || employees.length === 0) {
-            return res.status(404).json({
-                message: "No employees found.",
-                success: false
-            });
-        }
+    const employees = await employeeModel.find({ userId });
 
-        return res.status(200).json({
-            employees,
-            success: true
-        });
-
-    } catch (error) {
-        console.log(error);  // Log error for debugging
-        res.status(500).json({
-            message: "Server error.",
-            success: false
-        });
+    if (!employees.length) {
+      return res.status(404).json({
+        message: "No employees found for the logged-in user.",
+        success: false,
+      });
     }
-}
 
-// Get employee by ID
+    return res.status(200).json({
+      employees,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error fetching employees:", error);
+    res.status(500).json({
+      message: "Failed to fetch employees.",
+      success: false,
+    });
+  }
+};
+
+// Get an employee by ID
 export const getEmployeeById = async (req, res) => {
-    try {
-        const employeeId = req.params.id;
-        const employee = await employeeModel.findById(employeeId);
+  try {
+    const employeeId = req.params.id;
 
-        if (!employee) {
-            return res.status(404).json({
-                message: "Employee not found.",
-                success: false
-            });
-        }
-
-        return res.status(200).json({
-            employee,
-            success: true
-        });
-
-    } catch (error) {
-        console.log(error);  // Log error for debugging
-        res.status(500).json({
-            message: "Server error.",
-            success: false
-        });
+    // Validate employeeId as a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(employeeId)) {
+      return res.status(400).json({
+        message: "Invalid employee ID.",
+        success: false,
+      });
     }
-}
 
-// Update employee information
+    const employee = await employeeModel.findById(employeeId);
+
+    if (!employee) {
+      return res.status(404).json({
+        message: "Employee not found.",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      employee,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error fetching employee by ID:", error);
+    res.status(500).json({
+      message: "Failed to fetch employee.",
+      success: false,
+    });
+  }
+};
+
+// Update an employee's information
 export const updateEmployee = async (req, res) => {
-    try {
-        const { employeeName, department, jobTitle, email, phone } = req.body;
+  try {
+    const employeeId = req.params.id;
+    const { employeeName, department, jobTitle, email, phone } = req.body;
 
-        const updateData = { employeeName, department, jobTitle, email, phone };
-
-        // Get current date in IST for updatedAt
-        const updatedDateIST = getISTDateTime();  // Use the utility function to get the current date-time in IST
-        updateData.updatedAt = updatedDateIST;
-
-        const employee = await employeeModel.findByIdAndUpdate(req.params.id, updateData, { new: true });
-
-        if (!employee) {
-            return res.status(404).json({
-                message: "Employee not found.",
-                success: false
-            });
-        }
-
-        return res.status(200).json({
-            message: "Employee information updated successfully.",
-            employee,
-            success: true
-        });
-
-    } catch (error) {
-        console.log(error);  // Log error for debugging
-        res.status(500).json({
-            message: "Server error.",
-            success: false
-        });
+    // Validate employeeId as a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(employeeId)) {
+      return res.status(400).json({
+        message: "Invalid employee ID.",
+        success: false,
+      });
     }
-}
 
-// Delete employee
-export const deleteEmployee = async (req, res) => {
-    try {
-        const employeeId = req.params.id;
-        const employee = await employeeModel.findByIdAndDelete(employeeId);
-
-        if (!employee) {
-            return res.status(404).json({
-                message: "Employee not found.",
-                success: false
-            });
-        }
-
-        return res.status(200).json({
-            message: "Employee deleted successfully.",
-            success: true
-        });
-
-    } catch (error) {
-        console.log(error);  // Log error for debugging
-        res.status(500).json({
-            message: "Server error.",
-            success: false
-        });
+    // Validate required fields
+    if (!employeeName || !department || !jobTitle || !email || !phone) {
+      return res.status(400).json({
+        message: "All fields are required.",
+        success: false,
+      });
     }
-}
+
+    // Update the employee record
+    const updatedEmployee = await employeeModel.findByIdAndUpdate(
+      employeeId,
+      { employeeName, department, jobTitle, email, phone },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedEmployee) {
+      return res.status(404).json({
+        message: "Employee not found.",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Employee updated successfully.",
+      employee: updatedEmployee,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error updating employee:", error);
+    res.status(500).json({
+      message: "Failed to update employee.",
+      success: false,
+    });
+  }
+};
+

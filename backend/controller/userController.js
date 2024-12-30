@@ -9,7 +9,7 @@ export const register = async (req, res) => {
         // Check for missing fields
         if (!fullname || !email || !password || !role) {
             return res.status(400).json({
-                message: "Something is missing",
+                message: "Fields are missing.",
                 success: false
             });
         };
