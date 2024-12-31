@@ -1,5 +1,6 @@
+import mongoose from "mongoose";
 import employeeModel from "../models/employeeModel.js"; // Import employee model
-import mongoose from "mongoose"; // For ObjectId validation
+import assetModel from "../models/assetModel.js"; // Import asset model
 
 // Register a new employee
 export const registerEmployee = async (req, res) => {
@@ -48,7 +49,59 @@ export const registerEmployee = async (req, res) => {
   }
 };
 
-// Get all employees of a logged-in user
+// Assign asset to an employee
+export const assignAssetToEmployee = async (req, res) => {
+  try {
+    const { employeeId, assetId } = req.body;
+
+    // Validate employeeId and assetId as valid ObjectIds
+    if (!mongoose.Types.ObjectId.isValid(employeeId) || !mongoose.Types.ObjectId.isValid(assetId)) {
+      return res.status(400).json({
+        message: "Invalid employee or asset ID.",
+        success: false,
+      });
+    }
+
+    // Find the asset and check if it's available
+    const asset = await assetModel.findById(assetId);
+    if (!asset || asset.status !== "available") {
+      return res.status(400).json({
+        message: "Asset not available.",
+        success: false,
+      });
+    }
+
+    // Update the asset's status and assign it to the employee
+    asset.assignedTo = employeeId;
+    asset.status = "assigned";
+    await asset.save();
+
+    // Find the employee and update their assigned assets
+    const employee = await employeeModel.findById(employeeId);
+    if (!employee) {
+      return res.status(404).json({
+        message: "Employee not found.",
+        success: false,
+      });
+    }
+    employee.Asset.push(asset._id); // Update the "Asset" field in the employee model
+    await employee.save();
+
+    res.status(200).json({
+      message: "Asset assigned successfully.",
+      asset,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error assigning asset:", error);
+    res.status(500).json({
+      message: "Failed to assign asset.",
+      success: false,
+    });
+  }
+};
+
+// Get all employees for the logged-in user
 export const getEmployees = async (req, res) => {
   try {
     const userId = req.id; // Assuming `req.id` contains the logged-in user's ID
@@ -159,4 +212,3 @@ export const updateEmployee = async (req, res) => {
     });
   }
 };
-

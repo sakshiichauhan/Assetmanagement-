@@ -20,6 +20,6 @@ const assetMaintenanceSchema = new mongoose.Schema(
   }
 );
 
-const assetMaintenance = mongoose.model('assetMaintenance', assetMaintenanceSchema);
+const assetMaintenance = mongoose.model('assetmaintenance', assetMaintenanceSchema);
 
 export default assetMaintenance;

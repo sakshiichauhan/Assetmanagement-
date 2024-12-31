@@ -19,7 +19,12 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['employee', 'admin'], // role must be either 'employee' or 'admin'
         required: true
-    }
+    },
+    employee: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Employee',
+        default: null,
+      },
 },{timestamps:true});
 
 // Create the User model from the schema

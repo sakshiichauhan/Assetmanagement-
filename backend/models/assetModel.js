@@ -30,9 +30,8 @@ const assetSchema = new mongoose.Schema(
       required: true,
     },
     Room: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'room',
-      required: true,
+      type: string,
+      default: null,
     },
     assignedDate: {
       type: Date,
